@@ -10,15 +10,27 @@
 
 # Demo de disponibilidad
 
-Esta demo tiene una sencilla [aplicación web](./main.py) que expone una API REST; está implementada en Python usando [fastapi](https://fastapi.tiangolo.com) y la ejecutamos con [uvicorn](https://www.uvicorn.org).
+Esta demo tiene una sencilla [aplicación web](./main.py) que expone una API
+REST; está implementada en Python usando [fastapi](https://fastapi.tiangolo.com)
+y la ejecutamos con [uvicorn](https://www.uvicorn.org).
 
-La API tiene un endpoint para devolver un saludo o un error dependiendo de cierta probabilidad que se puede configurar; el valor predeterminado es 1 indicando que está siempre disponible.
+La API tiene un endpoint para devolver un saludo o un error dependiendo de
+cierta probabilidad que se puede configurar; el valor predeterminado es 1
+indicando que está siempre disponible.
 
-El otro endpoint de la API permite cambiar la probabilidad por un valor entre 0 y 1.
+El otro endpoint de la API permite cambiar la probabilidad por un valor entre 0
+y 1.
 
-La demo incluye también los scripts de [K6](https://grafana.com/docs/k6/latest/set-up/install-k6/) para probarla.
+La demo incluye también los scripts de
+[K6](https://grafana.com/docs/k6/latest/set-up/install-k6/) para probarla.
 
-Los comandos para hacer la demo están [aquí](./commands.azcli). Con el complemento [Azure CLI Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.azurecli) es posible ejecutar los comandos directamente desde Visual Studio Code.
+Para ejecutar esta demo usa los comandos que están [aquí](./commands.azcli). Con
+el complemento [Azure CLI
+Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.azurecli)
+es posible ejecutar los comandos directamente desde Visual Studio Code.
+
+Una vez que ejecutes la aplicación, puedes ver la documentación de los endpoints
+con [Swagger](http://localhost:5000/docs).
 
 # Requisitos
 

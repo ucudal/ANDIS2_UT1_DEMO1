@@ -13,6 +13,9 @@ pip3 install -r requirements.txt
 # Ejecutar la aplicación main.py
 uvicorn main:app --reload --host 127.0.0.1 --port 5000
 
+# Mira la documentación de los endpoints en Swagger
+# http://127.0.0.1:5000/docs
+
 # En otra terminal, ejecutar el comando para probar la API
 curl http://127.0.0.1:5000/saludo
 
@@ -34,16 +37,14 @@ k6 run script.js
 # Extras: grafana
 
 # Instalar y ejecutar InfluxDB
-docker run -d --name influxdb -p 8086:8086 influxdb:1.8
+docker run -d --name influxdb  --network=k6net -p 8086:8086 influxdb:1.8
 
 # Ejecutar los tests enviando los resultados a InfluxDB
 k6 run --out influxdb=http://localhost:8086/k6 script.js
 
-# Instalar Grafana; la versión 11.2.3 tienen un bug en el dashboard de k6
+# Instalar Grafana; la última versión tiene un bug en el dashboard de k6; usar 11.2.3
 docker pull grafana/grafana:11.2.3
-docker run -d -p 3000:3000 --network=k6net --name=grafana grafana/grafana:11.2.3
-
-# docker run -d -p 3000:3000 grafana/grafana
+docker run -d --name=grafana --network=k6net -p 3000:3000 grafana/grafana:11.2.3
 
 # Abrir Grafana en el navegador: http://localhost:3000
 # Iniciar sesión con usuario: admin y contraseña: admin
@@ -52,5 +53,9 @@ docker run -d -p 3000:3000 --network=k6net --name=grafana grafana/grafana:11.2.3
 # URL: http://influxdb:8086
 # Database: k6
 
-# De ahora en adelante, los resultados de las pruebas de carga se enviarán a InfluxDB
-# y se podrán visualizar en Grafana.
+# Agregar el dashboard de k6:
+# https://grafana.com/grafana/dashboards/2587-k6-load-testing-results/
+# usando el dashboard ID
+
+# De ahora en adelante, los resultados de las pruebas de carga se enviarán a
+# InfluxDB y se podrán visualizar en Grafana.
