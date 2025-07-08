@@ -1,0 +1,32 @@
+# Crear un entorno virtual
+python3 -m venv venv
+
+# Windows:
+venv\Scripts\activate
+
+# MacOS/Linux:
+source venv/bin/activate
+
+# Instalar dependencias
+pip3 install -r requirements.txt
+
+# Ejecutar la aplicación main.py
+uvicorn main:app --reload --host 127.0.0.1 --port 5000
+
+# En otra terminal, ejecutar el comando para probar la API
+curl http://127.0.0.1:5000/saludo
+
+# Ejecutar test.js en K6. Ver http_reqs y http_req_failed; usar http_req_duration
+# para estimar el tiempo total y el tiempo no disponible a partir de http_reqs y
+# http_req_failed
+k6 run script.js
+
+# Cambiar la disponibilidad al 50%
+curl -X POST http://127.0.0.1:5000/set-uptime \
+     -H "Content-Type: application/json" \
+     -d '{"value": 0.5}'
+
+# Ejecutar nuevamente test.js en K6. Ver http_reqs y http_req_failed usar http_req_duration
+# para estimar el tiempo total y el tiempo no disponible a partir de http_reqs y
+# http_req_failed
+k6 run script.js
