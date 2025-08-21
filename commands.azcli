@@ -63,7 +63,10 @@ docker run -d --name=grafana --network=k6net -p 3000:3000 grafana/grafana:11.2.3
 
 # Tear down
 docker stop influxdb
-docker rm influxdb
 docker stop grafana
+docker rm influxdb
 docker rm grafana
 docker network rm k6net
+
+deactivate
+rm -rf venv
