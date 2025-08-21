@@ -37,6 +37,7 @@ k6 run script.js
 # Extras: grafana
 
 # Instalar y ejecutar InfluxDB
+docker network create k6net
 docker run -d --name influxdb  --network=k6net -p 8086:8086 influxdb:1.8
 
 # Ejecutar los tests enviando los resultados a InfluxDB
@@ -59,3 +60,10 @@ docker run -d --name=grafana --network=k6net -p 3000:3000 grafana/grafana:11.2.3
 
 # De ahora en adelante, los resultados de las pruebas de carga se enviarán a
 # InfluxDB y se podrán visualizar en Grafana.
+
+# Tear down
+docker stop influxdb
+docker rm influxdb
+docker stop grafana
+docker rm grafana
+docker network rm k6net
