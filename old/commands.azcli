@@ -1,0 +1,72 @@
+# Crear un entorno virtual
+python3 -m venv venv
+
+# Windows:
+venv\Scripts\activate
+
+# MacOS/Linux:
+source venv/bin/activate
+
+# Instalar dependencias
+pip3 install -r requirements.txt
+
+# Ejecutar la aplicación main.py
+uvicorn main:app --reload --host 127.0.0.1 --port 5000
+
+# Mira la documentación de los endpoints en Swagger
+# http://127.0.0.1:5000/docs
+
+# En otra terminal, ejecutar el comando para probar la API
+curl http://127.0.0.1:5000/saludo
+
+# Ejecutar test.js en K6. Ver http_reqs y http_req_failed; usar http_req_duration
+# para estimar el tiempo total y el tiempo no disponible a partir de http_reqs y
+# http_req_failed
+k6 run script.js
+
+# Cambiar la disponibilidad al 50%
+curl -X POST http://127.0.0.1:5000/set-uptime \
+     -H "Content-Type: application/json" \
+     -d '{"value": 0.5}'
+
+# Ejecutar nuevamente test.js en K6. Ver http_reqs y http_req_failed usar http_req_duration
+# para estimar el tiempo total y el tiempo no disponible a partir de http_reqs y
+# http_req_failed
+k6 run script.js
+
+# Extras: grafana
+
+# Instalar y ejecutar InfluxDB
+docker network create k6net
+docker run -d --name influxdb  --network=k6net -p 8086:8086 influxdb:1.8
+
+# Ejecutar los tests enviando los resultados a InfluxDB
+k6 run --out influxdb=http://localhost:8086/k6 script.js
+
+# Instalar Grafana; la última versión tiene un bug en el dashboard de k6; usar 11.2.3
+docker pull grafana/grafana:11.2.3
+docker run -d --name=grafana --network=k6net -p 3000:3000 grafana/grafana:11.2.3
+
+# Abrir Grafana en el navegador: http://localhost:3000
+# Iniciar sesión con usuario: admin y contraseña: admin
+
+# Agregar InfluxDB como fuente de datos:
+# URL: http://influxdb:8086
+# Database: k6
+
+# Agregar el dashboard de k6:
+# https://grafana.com/grafana/dashboards/2587-k6-load-testing-results/
+# usando el dashboard ID
+
+# De ahora en adelante, los resultados de las pruebas de carga se enviarán a
+# InfluxDB y se podrán visualizar en Grafana.
+
+# Tear down
+docker stop influxdb
+docker stop grafana
+docker rm influxdb
+docker rm grafana
+docker network rm k6net
+
+deactivate
+rm -rf venv

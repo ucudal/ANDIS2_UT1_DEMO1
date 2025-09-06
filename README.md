@@ -40,4 +40,29 @@ con [Swagger](http://localhost:5000/docs).
 
 # Actividades
 
-A partir de los resultados de K6 y utilizando diferentes valores de probabilidad de disponibilidad determinar el tiempo operativo y el tiempo total; a partir de allí calcular la disponibilidad.
+A partir de los resultados de K6 y utilizando diferentes valores de probabilidad
+de disponibilidad determinar el tiempo operativo y el tiempo total; a partir de
+allí calcular la disponibilidad.
+
+
+
+# Demo de Disponibilidad con FastAPI
+
+Esta demo implementa dos servicios FastAPI (A y B) para ilustrar tácticas de disponibilidad, junto con InfluxDB y Grafana en contenedores Docker.
+
+## Estructura
+
+- **service_a/**: API principal, consume Service B y aplica tácticas de disponibilidad.
+- **service_b/**: Backend, simula fallas y permite configuración dinámica.
+- **k6/**: Pruebas de carga.
+- **commands.azcli**: Comandos para levantar, probar y detener los servicios.
+- **docker-compose.yml**: InfluxDB y Grafana.
+
+## Tácticas implementadas
+
+- Monitoreo, ping/echo, heartbeat, shadowing, rollback, reintentos, degradación elegante, repuesto redundante (simulado), rejuvenecimiento, manejo de excepciones, validaciones, etc.
+
+## Ejecución
+
+Sigue los pasos en `commands.azcli` para levantar los servicios y ejecutar las pruebas.
+

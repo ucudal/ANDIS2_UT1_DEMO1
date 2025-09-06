@@ -1,0 +1,23 @@
+services:
+  service_a:
+    build: ./service_a
+    environment:
+      - NODE_NAME=service_a
+      - SERVICE_B_URL=http://service_b:8002
+      - SHADOW_B_URL=http://service_b:8003
+      - LOG_FILE=service_a.log
+    ports:
+      - "8001:8001" # Service port: host:continer
+      - "5679:5678" # Debug port: host:container
+    volumes:
+      - .service_a/logs:/app/logs
+  service_b:
+    build: ./service_b
+    environment:
+      - NODE_NAME=service_b
+      - LOG_FILE=service_b.log
+    ports:
+      - "8002:8002" # Service port: host:continer
+      - "5680:5678" # Debug port: host:container
+    volumes:
+      - .service_b/logs:/app/logs

@@ -1,72 +1,96 @@
 # Crear un entorno virtual
 python3 -m venv venv
 
+# Activar el entorno virtual
 # Windows:
 venv\Scripts\activate
-
 # MacOS/Linux:
 source venv/bin/activate
 
 # Instalar dependencias
 pip3 install -r requirements.txt
 
-# Ejecutar la aplicación main.py
-uvicorn main:app --reload --host 127.0.0.1 --port 5000
+# Crear carpetas de logs si no existen
+mkdir -p service_a/logs
+mkdir -p service_b/logs
+
+# Ejecutar el servicio B en puerto 8001
+uvicorn service_b.main:app --host 0.0.0.0 --port 8001 --reload
 
 # Mira la documentación de los endpoints en Swagger
-# http://127.0.0.1:5000/docs
+# http://127.0.0.1:8001/docs
 
-# En otra terminal, ejecutar el comando para probar la API
-curl http://127.0.0.1:5000/saludo
+# Ejecutar los siguientes comandos en una nueva terminal; la anterior queda con
+# el servicio B corriendo
 
-# Ejecutar test.js en K6. Ver http_reqs y http_req_failed; usar http_req_duration
-# para estimar el tiempo total y el tiempo no disponible a partir de http_reqs y
-# http_req_failed
-k6 run script.js
+# Activar el entorno virtual
+# Windows:
+venv\Scripts\activate
+# MacOS/Linux:
+source venv/bin/activate
 
-# Cambiar la disponibilidad al 50%
-curl -X POST http://127.0.0.1:5000/set-uptime \
-     -H "Content-Type: application/json" \
-     -d '{"value": 0.5}'
+# Iniciar Service A en puerto 8000
+uvicorn service_a.main:app --host 0.0.0.0 --port 8000 --reload
 
-# Ejecutar nuevamente test.js en K6. Ver http_reqs y http_req_failed usar http_req_duration
-# para estimar el tiempo total y el tiempo no disponible a partir de http_reqs y
-# http_req_failed
-k6 run script.js
+# Mira la documentación de los endpoints en Swagger
+# http://127.0.0.1:8000/docs
 
-# Extras: grafana
+# En otra terminal, ejecutar los endpoints para probar las distintas tácticas:
 
-# Instalar y ejecutar InfluxDB
-docker network create k6net
-docker run -d --name influxdb  --network=k6net -p 8086:8086 influxdb:1.8
+# Ping/Echo, Service A
+curl http://localhost:8000/ping
+# Service B
+curl http://localhost:8001/ping
 
-# Ejecutar los tests enviando los resultados a InfluxDB
-k6 run --out influxdb=http://localhost:8086/k6 script.js
+# Healthcheck, Service A
+curl http://localhost:8000/health
+# Service B
+curl http://localhost:8001/health
 
-# Instalar Grafana; la última versión tiene un bug en el dashboard de k6; usar 11.2.3
-docker pull grafana/grafana:11.2.3
-docker run -d --name=grafana --network=k6net -p 3000:3000 grafana/grafana:11.2.3
 
-# Abrir Grafana en el navegador: http://localhost:3000
-# Iniciar sesión con usuario: admin y contraseña: admin
 
-# Agregar InfluxDB como fuente de datos:
-# URL: http://influxdb:8086
-# Database: k6
 
-# Agregar el dashboard de k6:
-# https://grafana.com/grafana/dashboards/2587-k6-load-testing-results/
-# usando el dashboard ID
+# Probar saludo
+curl http://localhost:8000/saludo
 
-# De ahora en adelante, los resultados de las pruebas de carga se enviarán a
-# InfluxDB y se podrán visualizar en Grafana.
+# Cambiar probabilidad de disponibilidad en Service B
+curl -X POST http://localhost:8000/config -H "Content-Type: application/json" -d '{"prob": 0.5}'
 
-# Tear down
-docker stop influxdb
-docker stop grafana
-docker rm influxdb
-docker rm grafana
-docker network rm k6net
+# Rollback de probabilidad
+curl -X POST http://localhost:8000/rollback
 
-deactivate
-rm -rf venv
+# Activar shadow mode en Service A
+curl -X POST http://localhost:8000/shadow -H "Content-Type: application/json" -d '{"enable": true}'
+
+
+
+
+# Ejecutar pruebas de carga con K6
+k6 run k6/script.js
+
+# Ver logs
+tail -f service_a/logs/service_a.log
+tail -f service_b/logs/service_b.log
+
+# Parar servicios (buscar los procesos uvicorn y matarlos)
+pkill -f "uvicorn main:app"
+
+
+
+
+
+
+
+
+# Iniciar InfluxDB y Grafana en contenedores Docker
+docker compose up -d
+
+# Parar InfluxDB y Grafana
+docker compose down
+
+######################
+
+md ./service_a/logs
+md ./service_b/logs
+
+docker compose up --build
