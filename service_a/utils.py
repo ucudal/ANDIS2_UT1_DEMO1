@@ -1,9 +1,12 @@
 import time
+import logging
 
 def get_timestamp():
     return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
-def retry_request(url, method="GET", json=None, retries=3):
+def retry_request(url, method="GET", json=None, retries=3, logger=None):
+    if logger is None:
+        logger = logging.getLogger("uvicorn")
     import httpx
     for attempt in range(retries):
         try:
@@ -14,7 +17,7 @@ def retry_request(url, method="GET", json=None, retries=3):
             r.raise_for_status()
             return r.json()
         except Exception as e:
-            log_event(f"Retry {attempt+1} failed for {url}: {e}")
+            logger.error(f"Retry {attempt+1} failed for {url}: {e}")
             time.sleep(1)
     raise Exception(f"All retries failed for {url}")
 

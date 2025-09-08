@@ -9,6 +9,6 @@ export const options = {
     },
 };
 export default function () {
-    http.get('http://127.0.0.1:5000/saludo');
+    http.get('http://localhost:8001/saludo');
     sleep(1);
 }

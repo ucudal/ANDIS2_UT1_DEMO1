@@ -1,79 +1,43 @@
-# Crear un entorno virtual
-python3 -m venv venv
+md ./service_a/logs
+md ./service_b/logs
 
-# Activar el entorno virtual
-# Windows:
-venv\Scripts\activate
-# MacOS/Linux:
-source venv/bin/activate
-
-# Instalar dependencias
-pip3 install -r requirements.txt
-
-# Crear carpetas de logs si no existen
-mkdir -p service_a/logs
-mkdir -p service_b/logs
-
-# Ejecutar el servicio B en puerto 8001
-uvicorn service_b.main:app --host 0.0.0.0 --port 8001 --reload
-
-# Mira la documentación de los endpoints en Swagger
-# http://127.0.0.1:8001/docs
-
-# Ejecutar los siguientes comandos en una nueva terminal; la anterior queda con
-# el servicio B corriendo
-
-# Activar el entorno virtual
-# Windows:
-venv\Scripts\activate
-# MacOS/Linux:
-source venv/bin/activate
-
-# Iniciar Service A en puerto 8000
-uvicorn service_a.main:app --host 0.0.0.0 --port 8000 --reload
-
-# Mira la documentación de los endpoints en Swagger
-# http://127.0.0.1:8000/docs
-
-# En otra terminal, ejecutar los endpoints para probar las distintas tácticas:
+docker compose up --build
 
 # Ping/Echo, Service A
-curl http://localhost:8000/ping
-# Service B
 curl http://localhost:8001/ping
+# Service B
+curl http://localhost:8002/ping
 
 # Healthcheck, Service A
-curl http://localhost:8000/health
-# Service B
 curl http://localhost:8001/health
-
-
-
+# Service B
+curl http://localhost:8002/health
 
 # Probar saludo
-curl http://localhost:8000/saludo
+curl http://localhost:8001/saludo
+
+# Ejecutar pruebas de carga con K6; debería responder siempre
+k6 run script.js
 
 # Cambiar probabilidad de disponibilidad en Service B
-curl -X POST http://localhost:8000/config -H "Content-Type: application/json" -d '{"prob": 0.5}'
+curl -X POST http://localhost:8001/config -H "Content-Type: application/json" -d '{"prob": 0.5}'
+
+# Ejecutar nuevmaente pruebas de carga con K6; debería fallar aproximadamente la mitad de las veces
+k6 run script.js
 
 # Rollback de probabilidad
-curl -X POST http://localhost:8000/rollback
+curl -X POST http://localhost:8001/rollback
 
 # Activar shadow mode en Service A
-curl -X POST http://localhost:8000/shadow -H "Content-Type: application/json" -d '{"enable": true}'
-
-
-
+curl -X POST http://localhost:8001/shadow -H "Content-Type: application/json" -d '{"enable": true}'
 
 # Ejecutar pruebas de carga con K6
-k6 run k6/script.js
+k6 run script.js
 
 # Ver logs
 tail -f service_a/logs/service_a.log
 tail -f service_b/logs/service_b.log
 
-# Parar servicios (buscar los procesos uvicorn y matarlos)
-pkill -f "uvicorn main:app"
 
 
 
@@ -88,9 +52,31 @@ docker compose up -d
 # Parar InfluxDB y Grafana
 docker compose down
 
-######################
 
-md ./service_a/logs
-md ./service_b/logs
 
-docker compose up --build
+
+
+###################
+
+# Debug
+
+# Crear un entorno virtual
+python3 -m venv venv
+
+# Activar el entorno virtual
+# Windows:
+venv\Scripts\activate
+# MacOS/Linux:
+source venv/bin/activate
+
+# Instalar dependencias
+pip3 install -r ./service_a/requirements.txt
+pip3 install -r ./service_b/requirements.txt
+
+# Crear carpetas de logs si no existen
+mkdir -p service_a/logs
+mkdir -p service_b/logs
+
+# Ejecutar el servicio B en puerto 8002
+python3 -m debugpy --listen 5678 --wait-for-client -m uvicorn service_b.main:app --host
+uvicorn service_b.main:app --host 0.0.0.0 --port 8001 --reload

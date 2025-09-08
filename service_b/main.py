@@ -1,4 +1,5 @@
 import uvicorn
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel
 import random
@@ -13,14 +14,39 @@ from rejuvenate import start_rejuvenate
 
 prob = 1.0  # Probabilidad inicial de disponibilidad
 logger = None
-app = FastAPI(
-    title="Service B - Backend",
-    description="Servicio backend que responde a saludos y simula fallas configurables."
-)
 
 LOG_FILE=os.environ.get("LOG_FILE", "service_b.log")
 NODE_NAME = os.environ.get("NODE_NAME", "service_b")
 NODE_PORT = int(os.environ.get("NODE_PORT", "8002"))
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    os.makedirs('/app/logs', exist_ok=True)
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(f"/app/logs/{LOG_FILE}"),
+            logging.StreamHandler()
+        ]
+    )
+    global logger
+    logger = logging.getLogger("uvicorn")
+    logger.info(f"Service {NODE_NAME} starting up at {NODE_PORT}")
+    logger.info(f"Debugger for {NODE_NAME} listening on port 5678...")
+    threading.Thread(target=lambda: start_rejuvenate(logger=logger), daemon=True).start()
+
+    yield  # This is where the app runs
+
+    # Shutdown
+    logger.info(f"App {NODE_NAME} shutting down")
+
+app = FastAPI(
+    title="Service B - Backend",
+    description="Servicio backend que responde a saludos y simula fallas configurables.",
+    lifespan=lifespan
+)
 
 class SaludoResponse(BaseModel):
     saludo: str
@@ -90,24 +116,6 @@ async def set_config(config: ConfigRequest = Body(..., example={"prob": 0.8})):
     prob = new_prob
     logger.info(f"Probabilidad de disponibilidad actualizada a {prob}")
     return {"prob": prob}
-
-
-@app.on_event("startup")
-async def startup_event():
-    os.makedirs('/app/logs', exist_ok=True)
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(f"/app/logs/{LOG_FILE}"),
-            logging.StreamHandler()
-        ]
-    )
-    global logger
-    logger = logging.getLogger("uvicorn")
-    logger.info(f"Debugger for {NODE_NAME} listening on port 5678...")
-    logger.info(f"Service {NODE_NAME} started at {NODE_PORT}")
-    threading.Thread(target=start_rejuvenate(logger=logger), daemon=True).start()
 
 if __name__ == "__main__":
     debugpy.listen(("0.0.0.0", 5678))
